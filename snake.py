@@ -1,6 +1,5 @@
 import pygame
 import random
-import time
 from pygame.locals import *
 
 displayWidth = 640
@@ -18,7 +17,7 @@ clock = pygame.time.Clock()
 
 font = pygame.font.SysFont('Arial', 20)
 
-screen = pygame.display.set_mode((displayWidth, displayHeight))
+gameDisplay = pygame.display.set_mode((displayWidth, displayHeight))
 pygame.display.set_caption("Snake Time!")
 
 
@@ -28,12 +27,12 @@ def messageToScreen(text, colour, yDisplace = 0):
     textBox = textSurface.get_rect()
     textBox.center = (displayWidth/2, displayHeight/2 - yDisplace)
 
-    screen.blit(textSurface, textBox)
+    gameDisplay.blit(textSurface, textBox)
 
 
 def drawSegment(colour, x, y, blockSize):
 
-    pygame.draw.rect(screen, colour, [x, y, blockSize, blockSize])
+    pygame.draw.rect(gameDisplay, colour, [x, y, blockSize, blockSize])
 
 
 def drawSnake(blockSize, snakeList):
@@ -51,7 +50,7 @@ def gameLoop():
     gameExit = False
     gameOver = False
     snakeList = []
-    snakeLength = 10
+    snakeLength = 5
 
     appleX = random.randrange(0, (displayWidth-blockSize)/10)*10
     appleY = random.randrange(0, (displayWidth-blockSize)/10)*10
@@ -80,17 +79,17 @@ def gameLoop():
                 gameExit = True
             elif event.type == KEYDOWN:
                 if event.key == K_UP:
-                    headYChange -= blockSize
+                    headYChange = -blockSize
                     headXChange = 0
                 elif event.key == K_DOWN:
-                    headYChange += blockSize
+                    headYChange = blockSize
                     headXChange = 0
                 elif event.key == K_RIGHT:
                     headYChange = 0
-                    headXChange += blockSize
+                    headXChange = blockSize
                 elif event.key == K_LEFT:
                     headYChange = 0
-                    headXChange -= blockSize
+                    headXChange = -blockSize
 
         if headX >= displayWidth or headY >= displayHeight or headX <= 0 or headY <= 0:
             gameOver = True
@@ -98,7 +97,7 @@ def gameLoop():
         headX += headXChange
         headY += headYChange
 
-        screen.fill(black)
+        gameDisplay.fill(black)
 
         drawSegment(red, appleX, appleY, blockSize)
 

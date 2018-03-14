@@ -1,129 +1,176 @@
+# imports
 import pygame
 import random
 from pygame.locals import *
 
-displayWidth = 640
-displayHeight = 640
+# global vars
+display_width = 640
+display_height = 640
 fps = 10
-blockSize = 10
+block_size = 10
 white = (255, 255, 255)
 black = (0, 0, 0)
 red = (255, 0, 0)
 green = (160,214,180)
 
+# initialise pygame
 pygame.init()
 
+# clock used for frames per second
 clock = pygame.time.Clock()
 
 font = pygame.font.SysFont('Arial', 20)
 
-gameDisplay = pygame.display.set_mode((displayWidth, displayHeight))
+# creating surface to execute game on
+game_display = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption("Snake Time!")
 
 
-def messageToScreen(text, colour, yDisplace = 0):
+# for any alerts to the player
+def message_to_screen(text, colour, y_displace = 0):
 
-    textSurface = font.render(text, True, colour)
-    textBox = textSurface.get_rect()
-    textBox.center = (displayWidth/2, displayHeight/2 - yDisplace)
+    text_surface = font.render(text, True, colour)
+    text_box = text_surface.get_rect()
+    text_box.center = (display_width / 2, display_height / 2 - y_displace)
 
-    gameDisplay.blit(textSurface, textBox)
-
-
-def drawSegment(colour, x, y, blockSize):
-
-    pygame.draw.rect(gameDisplay, colour, [x, y, blockSize, blockSize])
+    game_display.blit(text_surface, text_box)
 
 
-def drawSnake(blockSize, snakeList):
-    for segmentPos in snakeList:
-        drawSegment(green, segmentPos[0], segmentPos[1], blockSize)
+# draws a block 10x10 (block_size)
+def draw_segment(colour, x, y, size_of_block):
+
+    pygame.draw.rect(game_display, colour, [x, y, size_of_block, size_of_block])
 
 
-def gameLoop():
+# draws the snake
+def draw_snake(size_of_block, snake_list):
+    for segmentPos in snake_list:
+        draw_segment(green, segmentPos[0], segmentPos[1], size_of_block)
 
+
+# the main game loop (recursive)
+def game_loop():
     score = 0
-    headX = displayWidth/2
-    headY = displayHeight/2
-    headXChange = 0
-    headYChange = 0
-    gameExit = False
-    gameOver = False
-    snakeList = []
-    snakeLength = 5
+    head_x = display_width / 2
+    head_y = display_height / 2
+    head_x_change = 0
+    head_y_change = 0
+    game_exit = False
+    game_over = False
+    snake_list = []
+    snake_length = 5
+    human_player = True
 
-    appleX = random.randrange(0, (displayWidth-blockSize)/10)*10
-    appleY = random.randrange(0, (displayWidth-blockSize)/10)*10
+    # initial spawning of the apple
+    apple_x, apple_y = spawn_apple()
 
-    while not gameExit:
+    # difference between game_exit and game_over:
+    # game_exit means quit and game_over gives player choice of quit or replay
+    while not game_exit:
 
-        while gameOver:
-            messageToScreen("Game Over...", red, 0)
-            messageToScreen("Press SPACE to play again or Q to quit.", red, -20)
-            messageToScreen("Score:  " + str(score), green, 20)
-            pygame.display.update()
+        # game over handling
+        while game_over:
+            handle_game_over(score)
 
+            # handling for player clicking cross in top corner
             for event in pygame.event.get():
                 if event.type == QUIT:
-                    gameOver = False
-                    gameExit = True
-                elif event.type == KEYDOWN:
+                    game_over = False
+                    game_exit = True
+                elif event.type == KEYDOWN and human_player:
                     if event.key == K_q:
-                        gameExit = True
-                        gameOver = False
-                    elif event.key == K_SPACE:
-                        gameLoop()
+                        game_exit = True
+                        game_over = False
+                    elif event.key == K_SPACE and human_player:
+                        game_loop()
+                    elif not human_player:
+                        game_exit = True
+                        game_over = False
 
         for event in pygame.event.get():
             if event.type == QUIT:
-                gameExit = True
-            elif event.type == KEYDOWN:
-                if event.key == K_UP:
-                    headYChange = -blockSize
-                    headXChange = 0
-                elif event.key == K_DOWN:
-                    headYChange = blockSize
-                    headXChange = 0
-                elif event.key == K_RIGHT:
-                    headYChange = 0
-                    headXChange = blockSize
-                elif event.key == K_LEFT:
-                    headYChange = 0
-                    headXChange = -blockSize
+                game_exit = True
+            elif event.type == KEYDOWN and human_player:
+                head_x_change, head_y_change = process_key_control(event, head_x_change, head_y_change)
+            elif not human_player:
+                event.key = K_UNKNOWN
+                head_x_change, head_y_change = process_key_control(event, head_x_change, head_y_change)
 
-        if headX >= displayWidth or headY >= displayHeight or headX <= 0 or headY <= 0:
-            gameOver = True
+        snake_head = [head_x, head_y]
 
-        headX += headXChange
-        headY += headYChange
+        game_over = snake_has_crashed(score, snake_list, snake_head, game_over, head_x, head_y)
 
-        gameDisplay.fill(black)
+        head_x += head_x_change
+        head_y += head_y_change
 
-        drawSegment(red, appleX, appleY, blockSize)
+        game_display.fill(black)
 
-        snakeHead = []
+        draw_segment(red, apple_x, apple_y, block_size)
 
-        snakeHead.append(headX)
-        snakeHead.append(headY)
+        snake_list.append(snake_head)
 
-        snakeList.append(snakeHead)
+        if len(snake_list) > snake_length:
+            del snake_list[0]
 
-        if len(snakeList) > snakeLength:
-            del snakeList[0]
-
-        drawSnake(blockSize, snakeList)
+        draw_snake(block_size, snake_list)
 
         pygame.display.update()
 
-        if headX == appleX and headY == appleY:
-            appleX = random.randrange(0, (displayWidth - blockSize) / 10) * 10
-            appleY = random.randrange(0, (displayWidth - blockSize) / 10) * 10
-            snakeLength += 1
-            score += 1
+        if head_x == apple_x and head_y == apple_y:
+            apple_x, apple_y, score, snake_length = handle_scoring(apple_x, apple_y, score, snake_length)
 
         clock.tick(fps)
 
     pygame.quit()
     quit()
 
-gameLoop()
+
+def spawn_apple():
+    apple_x = random.randrange(0, (display_width - block_size) / 10) * 10
+    apple_y = random.randrange(0, (display_width - block_size) / 10) * 10
+    return apple_x, apple_y
+
+
+def handle_scoring(apple_x, apple_y, score, snake_length):
+    apple_x, apple_y = spawn_apple()
+    snake_length += 1
+    score += 1
+    return apple_x, apple_y, score, snake_length
+
+
+def handle_game_over(score):
+    message_to_screen("Game Over...", red, 0)
+    message_to_screen("Press SPACE to play again or Q to quit.", red, -20)
+    message_to_screen("Score:  " + str(score), green, 20)
+    pygame.display.update()
+
+
+def process_key_control(event, head_x_change, head_y_change):
+    if event.key == K_UP:
+        head_y_change = -block_size
+        head_x_change = 0
+    elif event.key == K_DOWN:
+        head_y_change = block_size
+        head_x_change = 0
+    elif event.key == K_RIGHT:
+        head_y_change = 0
+        head_x_change = block_size
+    elif event.key == K_LEFT:
+        head_y_change = 0
+        head_x_change = -block_size
+    return head_x_change, head_y_change
+
+
+def snake_has_crashed(score, snake_list, snake_head, game_over, head_x, head_y):
+    if score >= 1:
+        for e in snake_list:
+            if snake_head == e:
+                game_over = True
+
+    if head_x >= display_width or head_y >= display_height or head_x <= 0 or head_y <= 0:
+        game_over = True
+
+    return game_over
+
+
+game_loop()

@@ -1,6 +1,7 @@
 # imports
 import pygame
 import random
+import bot_player
 from pygame.locals import *
 
 # global vars
@@ -18,6 +19,7 @@ pygame.init()
 
 # clock used for frames per second
 clock = pygame.time.Clock()
+tick_count = clock.get_time()
 
 font = pygame.font.SysFont('Arial', 20)
 
@@ -59,7 +61,7 @@ def game_loop():
     game_over = False
     snake_list = []
     snake_length = 5
-    human_player = True
+    human_player = False
 
     # initial spawning of the apple
     apple_x, apple_y = spawn_apple()
@@ -93,12 +95,12 @@ def game_loop():
             elif event.type == KEYDOWN and human_player:
                 head_x_change, head_y_change = process_key_control(event, head_x_change, head_y_change)
             elif not human_player:
-                event.key = K_UNKNOWN
+                event.key = bot_player.random_direction_bot(tick_count)
                 head_x_change, head_y_change = process_key_control(event, head_x_change, head_y_change)
 
         snake_head = [head_x, head_y]
 
-        game_over = snake_has_crashed(score, snake_list, snake_head, game_over, head_x, head_y)
+        game_over = snake_has_crashed(head_x_change, snake_list, snake_head, game_over, head_x, head_y)
 
         head_x += head_x_change
         head_y += head_y_change
@@ -146,23 +148,23 @@ def handle_game_over(score):
 
 
 def process_key_control(event, head_x_change, head_y_change):
-    if event.key == K_UP:
+    if event.key == K_UP and head_y_change <= 0:
         head_y_change = -block_size
         head_x_change = 0
-    elif event.key == K_DOWN:
+    elif event.key == K_DOWN and head_y_change >=0:
         head_y_change = block_size
         head_x_change = 0
-    elif event.key == K_RIGHT:
+    elif event.key == K_RIGHT and head_x_change >= 0:
         head_y_change = 0
         head_x_change = block_size
-    elif event.key == K_LEFT:
+    elif event.key == K_LEFT and head_x_change <= 0:
         head_y_change = 0
         head_x_change = -block_size
     return head_x_change, head_y_change
 
 
-def snake_has_crashed(score, snake_list, snake_head, game_over, head_x, head_y):
-    if score >= 1:
+def snake_has_crashed(head_x_change, snake_list, snake_head, game_over, head_x, head_y):
+    if head_x_change >= 1:
         for e in snake_list:
             if snake_head == e:
                 game_over = True

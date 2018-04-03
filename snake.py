@@ -7,7 +7,7 @@ from pygame.locals import *
 # global vars
 display_width = 640
 display_height = 640
-fps = 10
+fps = 60
 block_size = 10
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -61,7 +61,7 @@ def game_loop():
     game_over = False
     snake_list = []
     snake_length = 5
-    human_player = False
+    human_player = True
 
     # initial spawning of the apple
     apple_x, apple_y = spawn_apple()
@@ -71,7 +71,7 @@ def game_loop():
     while not game_exit:
 
         # game over handling
-        while game_over:
+        while game_over and human_player:
             handle_game_over(score)
 
             # handling for player clicking cross in top corner
@@ -85,9 +85,6 @@ def game_loop():
                         game_over = False
                     elif event.key == K_SPACE and human_player:
                         game_loop()
-                    elif not human_player:
-                        game_exit = True
-                        game_over = False
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -100,7 +97,7 @@ def game_loop():
 
         snake_head = [head_x, head_y]
 
-        game_over = snake_has_crashed(head_x_change, snake_list, snake_head, game_over, head_x, head_y)
+        game_over = snake_has_crashed(head_y_change, head_x_change, snake_list, snake_head, game_over, head_x, head_y)
 
         head_x += head_x_change
         head_y += head_y_change
@@ -163,8 +160,8 @@ def process_key_control(event, head_x_change, head_y_change):
     return head_x_change, head_y_change
 
 
-def snake_has_crashed(head_x_change, snake_list, snake_head, game_over, head_x, head_y):
-    if head_x_change >= 1:
+def snake_has_crashed(head_y_change, head_x_change, snake_list, snake_head, game_over, head_x, head_y):
+    if tick_count >= 120:
         for e in snake_list:
             if snake_head == e:
                 game_over = True

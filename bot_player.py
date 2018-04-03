@@ -15,5 +15,5 @@ def random_direction():
 
 
 def random_direction_bot(count):
-    if count % 60 == 0:
+    if count % 10 == 0:
         return random_direction()
